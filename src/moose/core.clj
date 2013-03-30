@@ -2,22 +2,50 @@
   (:use lamina.core
         aleph.http
         compojure.core
-        (ring.middleware resource file-info params)
+        (ring.middleware resource file-info params reload)
         (hiccup core page))
+  (:require
+      [lamina.core.named :as named]
+      [aleph.formats :as formats]
+    )
   (:require [compojure.route :as route]))
 
+(def token-holders (atom {}))
+(def token-waiters (atom {}))
 
+(defn record-token-waiter [token waiter-name])
 
-(def global-channel (named-channel :board))
+(def highway-channel (named-channel "highway"))
 
-(def token-to-user (atom {}))
-(def token-to-channel (atom {}))
+;fix parallelism
+(defn get-token-channel [channel-name]
+  (named-channel channel-name))
 
-(defn subscribe-handler [channel request]
-  (receive channel
-    (fn [name]
-      (siphon (map* #(str name ": " %) channel) global-channel)
-      (siphon global-channel channel))))
+(defn transformer-for-client [client-name]
+  (fn [stream]
+   (map* (fn [data] (prn "HAHAHAHA") (prn (type data)) data) stream)))
+
+(defn subscribe-handler [request-channel request]
+  (receive request-channel
+    (fn [client-name]
+      (siphon (map*
+                  (fn [action]
+                    (let [decoded (formats/decode-json action)
+                          action (:action decoded)
+                          token (:token decoded) ]
+                      (record-token-waiter token client-name)
+                      (str { :action action
+                             :token token
+                             :channel client-name
+                           })
+                       ))
+                  request-channel)
+                highway-channel)
+        (siphon
+          ((transformer-for-client client-name) highway-channel)
+          request-channel)
+        )
+      ))
 
 
 (defn page [nom]
@@ -25,7 +53,7 @@
    [:head
     (include-js "/js/core.js")]
    [:body
-    "WAT"
+    "WAT  "
     nom]))
 
 (defn sync-app [channel request]
@@ -35,24 +63,19 @@
        :body (page "ballto")}))
 
 (def wrapped-sync-app
-  (wrap-params (wrap-aleph-handler sync-app)))
+  (wrap-reload (wrap-params (wrap-aleph-handler sync-app)) '(moose.core)))
 
 (def wrapped-async-app
-  (wrap-params (wrap-aleph-handler subscribe-handler)))
+  (wrap-reload (wrap-params (wrap-aleph-handler subscribe-handler))))
 
 (defroutes my-routes
-  (GET ["/subscribe/:key"] {}  wrapped-sync-app)
+  (GET ["/subscribe/:key"] {}  wrapped-async-app)
   (route/not-found wrapped-sync-app))
-
-
 
 (defn app [channel request]
   (if (:websocket request)
     (subscribe-handler channel request)
     ((wrap-ring-handler (wrap-resource my-routes "public")) channel request)))
-
-
-
 
 (defn -main [& args]
   (start-http-server app {:port 8080 :websocket true}))
