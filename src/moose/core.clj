@@ -1,82 +1,126 @@
 (ns moose.core
-  (:use lamina.core
-        aleph.http
-        compojure.core
-        (ring.middleware resource file-info params reload)
-        (hiccup core page))
+  (:use
+    compojure.core
+    (hiccup core page)
+    lamina.core
+    (ring.middleware resource file-info params reload)
+    aleph.http)
   (:require
-      [lamina.core.named :as named]
-      [aleph.formats :as formats]
+    [aleph.formats :as formats]
+    [compojure.route :as route]
+    [moose.message :as message]
     )
-  (:require [compojure.route :as route]))
+  )
 
-(def token-holders (atom {}))
-(def token-waiters (atom {}))
+(declare transform-to-outgoing-events process-request process-relinquish)
 
-(defn record-token-waiter [token waiter-name])
+(def token-waiters (ref {}))
 
-(def highway-channel (named-channel "highway"))
-
-;fix parallelism
-(defn get-token-channel [channel-name]
-  (named-channel channel-name))
-
-(defn transformer-for-client [client-name]
-  (fn [stream]
-   (map* (fn [data] (prn "HAHAHAHA") (prn (type data)) data) stream)))
-
-(defn subscribe-handler [request-channel request]
-  (receive request-channel
-    (fn [client-name]
-      (siphon (map*
-                  (fn [action]
-                    (let [decoded (formats/decode-json action)
-                          action (:action decoded)
-                          token (:token decoded) ]
-                      (record-token-waiter token client-name)
-                      (str { :action action
-                             :token token
-                             :channel client-name
-                           })
-                       ))
-                  request-channel)
-                highway-channel)
-        (siphon
-          ((transformer-for-client client-name) highway-channel)
-          request-channel)
-        )
-      ))
+(def incoming-events (named-channel "incoming"))
+(def outgoing-events (named-channel "outgoing-events"))
+(def grants (named-channel "grants"))
+(def requests (named-channel "requests"))
 
 
-(defn page [nom]
-  (html5
-   [:head
-    (include-js "/js/core.js")]
-   [:body
-    "WAT  "
-    nom]))
+(defn filter-for-user [user stream]
+  (filter* #(= (:client (or % {})) user) stream))
+(defn filter-for-token [token stream]
 
-(defn sync-app [channel request]
-  (enqueue channel
-      {:status 200
-       :headers {"content-type" "text/html"}
-       :body (page "ballto")}))
+  (filter* #(= (:token (or % {})) token) stream))
 
-(def wrapped-sync-app
-  (wrap-reload (wrap-params (wrap-aleph-handler sync-app)) '(moose.core)))
+(defn register-token-channel [token _]
+  (named-channel
+    token
+    (fn [channel]
+      (siphon (filter-for-token token incoming-events) channel)
+      (siphon (transform-to-outgoing-events channel) outgoing-events))))
 
-(def wrapped-async-app
-  (wrap-reload (wrap-params (wrap-aleph-handler subscribe-handler))))
+(defn request-to-event [action humanoid-namezoid]
+  (let [to-enqueue (merge action {:client humanoid-namezoid})]
+    (register-token-channel (:token action) humanoid-namezoid)
+    to-enqueue))
 
-(defroutes my-routes
-  (GET ["/subscribe/:key"] {}  wrapped-async-app)
-  (route/not-found wrapped-sync-app))
+(defn requests-to-events [request-channel remote-address humanoid-namezoid]
+  (let [client-name (str remote-address "::::" humanoid-namezoid)]
+    (map*
+      #(request-to-event % humanoid-namezoid)
+      request-channel)))
 
-(defn app [channel request]
-  (if (:websocket request)
-    (subscribe-handler channel request)
-    ((wrap-ring-handler (wrap-resource my-routes "public")) channel request)))
+(defn events-to-client [client-specified-name]
+  (filter-for-user client-specified-name outgoing-events))
 
-(defn -main [& args]
-  (start-http-server app {:port 8080 :websocket true}))
+(def relinquish-stream
+  (filter* (fn [data]
+             (let [action (:action data)]
+               (= action "relinquish"))
+             )
+           incoming-events))
 
+(def request-stream
+  (filter* (fn [data]
+             (let [action (:action data)]
+               (= action "request")))
+           incoming-events))
+
+(defn- iterative-contains? [value items]
+  (some #(= % value) items))
+
+(defn- conjv [coll item]
+  (into [] (conj coll item))
+  )
+
+(defn already-waiting? [waiters requestor]
+  (iterative-contains? requestor waiters))
+
+(defn add-requestor [token requestor]
+  (dosync
+    (alter token-waiters (fn [waiters]
+                           (let [waiters-for-token (get waiters token [])
+                                 new-waiters (if (already-waiting? waiters-for-token requestor)
+                                               waiters-for-token
+                                               (conjv waiters-for-token requestor))]
+                             (assoc waiters token new-waiters))))
+    (first (get @token-waiters token))))
+
+(defn remove-requestor [token requestor]
+  (dosync
+    (let [waiters (get @token-waiters token)
+          without-requestor (remove #(= requestor %) waiters)]
+      (alter token-waiters #(assoc % token without-requestor))
+      {:before waiters
+       :after without-requestor})))
+
+(defn transform-to-outgoing-events [token-channel]
+  (map* (fn [request]
+          (let [token   (:token request)
+                client  (:client request)
+                action  (:action request)]
+            (case action
+              "request" (process-request token client action)
+              "relinquish" (process-relinquish token client action)
+              )))
+        token-channel
+        ))
+
+(defn process-request [token client action]
+  (let [holder (add-requestor token client)
+        got-the-token? (= holder client)]
+    (if got-the-token?
+           {:client client
+            :event :grant
+            :token token}
+           {:client holder
+            :event :requested
+            :token token}
+           )))
+
+(defn process-relinquish [token client action]
+  (let [relinquisher client
+        foo  (remove-requestor token relinquisher)
+        before (:before foo)
+        after (:after foo)
+        new-holder? (not (= (first before) (first after))) ]
+    (if new-holder?
+      {:client (first after)
+       :event :grant
+       :token token})))
