@@ -7,6 +7,7 @@
     lamina.core
     aleph.http)
   (:require
+    [clojure.string :as string]
     [moose.message :as message]
     [compojure.route :as route]))
 
@@ -24,13 +25,25 @@
        :headers {"content-type" "text/html"}
        :body (page (get  (:query-params request) "name"))}))
 
+(defn client-name [request given-name]
+  (let [ip (:remote-addr request)
+        ip (hash ip)]
+    (str ip "::::" given-name)))
+
 (defn subscribe-handler [request-channel request]
   (receive
     request-channel
     (fn [client-specified-name]
-      (let [decoded-requests (map* message/decode-json request-channel)]
-        (siphon (requests-to-events decoded-requests (:remote-addr request) client-specified-name) incoming-events)
-        (siphon (map* str (events-to-client client-specified-name))  request-channel)))))
+      (let [the-name (client-name request client-specified-name)
+            decoded-requests (map* message/decode-json request-channel)]
+       (siphon
+          (transform-to-events
+            decoded-requests
+            the-name)
+          incoming-events)
+        (siphon
+          (map* str (events-for-client the-name))
+          request-channel)))))
 
 (def wrapped-async-app
   (wrap-reload (wrap-params (wrap-aleph-handler subscribe-handler))))

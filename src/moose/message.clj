@@ -9,9 +9,18 @@
     [aleph.formats :as formats]
     [compojure.route :as route]))
 
+(defn valid? [message]
+  true
+  )
+
 (defn decode-json [message]
   (prn message)
-   (formats/decode-json message))
+  (if (valid? message)
+    (formats/decode-json message)))
 
-;(defn for-user? [message-string]
-;  (= (:client (read-string (or message-string "{}"))) user))
+(defn for-user? [user]
+  (prn user)
+  #(= (:client %) user))
+
+(defn for-token? [token]
+  #(= (:token %) token))
