@@ -11,13 +11,7 @@
     [moose.message :as message]
     [compojure.route :as route]))
 
-(defn page [nom]
-  (html5
-   [:head
-    (include-js "/js/core.js")]
-   [:body
-    "Hello,  "
-    nom]))
+(declare client-name page async-app sync-app app)
 
 (defn sync-app [channel request]
   (enqueue channel
@@ -25,12 +19,7 @@
        :headers {"content-type" "text/html"}
        :body (page (get  (:query-params request) "name"))}))
 
-(defn client-name [request given-name]
-  (let [ip (:remote-addr request)
-        ip (hash ip)]
-    (str ip "::::" given-name)))
-
-(defn subscribe-handler [request-channel request]
+(defn- async-app [request-channel request]
   (receive
     request-channel
     (fn [client-specified-name]
@@ -46,21 +35,33 @@
           request-channel)))))
 
 (def wrapped-async-app
-  (wrap-reload (wrap-params (wrap-aleph-handler subscribe-handler))))
+  (wrap-reload (wrap-params (wrap-aleph-handler async-app))))
 
 (def wrapped-sync-app
   (wrap-reload (wrap-params (wrap-aleph-handler sync-app)) '(moose.core)))
+
+(defn- client-name [request given-name]
+  (let [ip (:remote-addr request)
+        ip (hash ip)]
+    (str ip "::::" given-name)))
+
+(defn- page [nom]
+  (html5
+   [:head
+    (include-js "/js/core.js")]
+   [:body
+    "Hello,  "
+    nom]))
 
 (defroutes my-routes
   (GET ["/subscribe/:key"] {}  wrapped-async-app)
   (route/not-found wrapped-sync-app))
 
-(defn app [channel request]
+(defn- app [channel request]
   (if (:websocket request)
-    (subscribe-handler channel request)
+    (async-app channel request)
     ((wrap-ring-handler (wrap-resource my-routes "public")) channel request)))
+
 
 (defn -main [& args]
   (start-http-server app {:port 8080 :websocket true}))
-
-
