@@ -28,7 +28,7 @@
   (filter* (message/for-user? client-specified-name) outgoing-events))
 
 (defn- transform-request-to-event [action humanoid-namezoid]
-  (let [to-enqueue (merge action {:client humanoid-namezoid})]
+  (let [to-enqueue action]
     (register-channel-for-token (:token action))
     to-enqueue))
 
@@ -42,8 +42,8 @@
 (defn- transform-to-outgoing-events [token-channel]
   (map* (fn [request]
           (let [token   (:token request)
-                client  (:client request)
-                action  (:action request)]
+                client  (:sender request)
+                action  (:event request)]
             (case action
               "request" (handle-request-event token client action)
               "relinquish" (handle-relinquish-event token client action))))
@@ -56,17 +56,11 @@
         after (:after foo)
         new-holder? (not (= (first before) (first after))) ]
     (if new-holder?
-      {:client (first after)
-       :event :grant
-       :token token})))
+      (message/build-message-to (first after) :grant token))))
 
 (defn- handle-request-event [token client action]
   (let [holder (state/add-requestor token client)
         got-the-token? (= holder client)]
     (if got-the-token?
-           {:client client
-            :event :grant
-            :token token}
-           {:client holder
-            :event :requested
-            :token token})))
+      (message/build-message-to client :grant token)
+      (message/build-message-to holder :requested token))))

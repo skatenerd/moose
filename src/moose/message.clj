@@ -9,18 +9,33 @@
     [aleph.formats :as formats]
     [compojure.route :as route]))
 
-(defn valid? [message]
-  true
-  )
+(declare valid? decode-json)
 
-(defn decode-json [message]
-  (prn message)
-  (if (valid? message)
-    (formats/decode-json message)))
+(defn from-incoming-json [payload sender]
+  (let [decoded (decode-json payload)]
+    (if (valid? payload)
+      {:sender sender
+       :event (:action decoded)
+       :token (:token decoded)})))
+
+(defn build-message-to [user action token]
+  {:recipient user
+   :event action
+   :token token})
+
+(defn build-message-from [user action token]
+  {:sender user
+   :event action
+   :token token})
 
 (defn for-user? [user]
-  (prn user)
-  #(= (:client %) user))
+  #(= (:recipient %) user))
 
 (defn for-token? [token]
   #(= (:token %) token))
+
+(defn- valid? [message]
+  true)
+
+(defn decode-json [message]
+  (formats/decode-json message))
