@@ -28,6 +28,18 @@
    :event action
    :token token})
 
+(defn sender [message]
+  (:sender message))
+
+(defn recipient [message]
+  (:recipient message))
+
+(defn token [message]
+  (:token message))
+
+(defn event [message]
+  (:event message))
+
 (defn for-user? [user]
   #(= (:recipient %) user))
 

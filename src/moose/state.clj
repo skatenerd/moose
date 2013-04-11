@@ -3,7 +3,7 @@
 
 (def token-waiters (ref {}))
 
-(declare already-waiting? new-waiters add-waiter-for-token)
+(declare already-waiting? new-waiters add-waiter-for-token new-holder)
 
 (defn add-requestor [token requestor]
   (dosync
@@ -17,8 +17,7 @@
     (let [waiters (get @token-waiters token)
           without-requestor (remove #(= requestor %) waiters)]
       (alter token-waiters #(assoc % token without-requestor))
-      {:before waiters
-       :after without-requestor})))
+      (new-holder waiters without-requestor))))
 
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])
@@ -34,3 +33,9 @@
 (defn- already-waiting? [waiters requestor]
   (iterative-contains? requestor waiters))
 
+(defn- new-holder [before after]
+  (let [first-before (first before)
+        first-after (first after)]
+    (if (= first-before first-after)
+      nil
+      first-after)))

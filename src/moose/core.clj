@@ -12,7 +12,7 @@
     [moose.state :as state]
     [moose.message :as message]))
 
-(declare transform-request-to-event transform-to-outgoing-events handle-request-event handle-relinquish-event register-channel-for-token)
+(declare new-holder transform-request-to-event transform-to-outgoing-events handle-request-event handle-relinquish-event register-channel-for-token)
 
 (def incoming-events (named-channel "incoming"))
 (def outgoing-events (named-channel "outgoing-events"))
@@ -40,27 +40,22 @@
       (siphon (transform-to-outgoing-events channel) outgoing-events))))
 
 (defn- transform-to-outgoing-events [token-channel]
-  (map* (fn [request]
-          (let [token   (:token request)
-                client  (:sender request)
-                action  (:event request)]
-            (case action
-              "request" (handle-request-event token client action)
-              "relinquish" (handle-relinquish-event token client action))))
+  (map* (fn [message]
+          (let [sender (message/sender message)
+                token (message/token message)]
+           (case (:event message)
+              "request" (handle-request-event sender token)
+              "relinquish" (handle-relinquish-event sender token))))
         token-channel))
 
-(defn- handle-relinquish-event [token client action]
-  (let [relinquisher client
-        foo  (state/remove-requestor token relinquisher)
-        before (:before foo)
-        after (:after foo)
-        new-holder? (not (= (first before) (first after))) ]
-    (if new-holder?
-      (message/build-message-to (first after) :grant token))))
+(defn- handle-relinquish-event [relinquisher token]
+  (let [new-holder (state/remove-requestor token relinquisher)]
+    (if new-holder
+      (message/build-message-to new-holder :grant token))))
 
-(defn- handle-request-event [token client action]
-  (let [holder (state/add-requestor token client)
-        got-the-token? (= holder client)]
+(defn- handle-request-event [requestor token]
+  (let [holder (state/add-requestor token requestor)
+        got-the-token? (= holder requestor)]
     (if got-the-token?
-      (message/build-message-to client :grant token)
+      (message/build-message-to requestor :grant token)
       (message/build-message-to holder :requested token))))
