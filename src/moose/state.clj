@@ -5,12 +5,15 @@
 
 (declare already-waiting? new-waiters add-waiter-for-token new-holder)
 
-(defn add-requestor [token requestor]
+(defn add-requestor
+  ([token requestor token-waiters]
   (dosync
     (alter
       token-waiters
       #(add-waiter-for-token % requestor token))
     (first (get @token-waiters token))))
+  ([token requestor]
+   (add-requestor token requestor token-waiters)))
 
 (defn remove-requestor [token requestor]
   (dosync
