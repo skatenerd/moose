@@ -15,12 +15,15 @@
   ([token requestor]
    (add-requestor token requestor token-waiters)))
 
-(defn remove-requestor [token requestor]
-  (dosync
-    (let [waiters (get @token-waiters token)
-          without-requestor (remove #(= requestor %) waiters)]
-      (alter token-waiters #(assoc % token without-requestor))
-      (new-holder waiters without-requestor))))
+(defn remove-requestor
+  ([token requestor token-waiters]
+   (dosync
+     (let [waiters (get @token-waiters token)
+           without-requestor (remove #(= requestor %) waiters)]
+       (alter token-waiters #(assoc % token without-requestor))
+       (new-holder waiters without-requestor))))
+  ([token requestor]
+   (remove-requestor token requestor token-waiters)))
 
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])

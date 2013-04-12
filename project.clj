@@ -1,4 +1,6 @@
-(defproject moose "0.1.0-SNAPSHOT"
+(defproject
+  moose
+  "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -10,6 +12,11 @@
                  [aleph "0.2.1-beta2"]
                  [hiccup "1.0.0-beta1"]
                  [org.clojure/clojurescript "0.0-1006"]]
+
+
+  :test-selectors {:default (complement :integration)
+                   :integration :integration
+                   :all (constantly true)}
 
   :ring {:handler moose.core/app}
   :main moose.web)
