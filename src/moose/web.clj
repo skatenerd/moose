@@ -1,6 +1,8 @@
 (ns moose.web
   (:use
     moose.core
+    moose.web.synchronous
+    moose.web.asynchronous
     compojure.core
     (hiccup core page)
     (ring.middleware resource file-info params reload)
@@ -11,64 +13,12 @@
     [moose.message :as message]
     [compojure.route :as route]))
 
-(declare client-name page async-app sync-app app)
-
-;sync app
-(defn sync-app [channel request]
-  (enqueue channel
-      {:status 200
-       :headers {"content-type" "text/html"}
-       :body (page (get  (:query-params request) "name"))}))
-
-(def wrapped-sync-app
-  (wrap-reload (wrap-params (wrap-aleph-handler sync-app)) '(moose.core)))
-
-(defn- page [nom]
-  (html5
-   [:head
-    (include-js "/js/core.js")]
-   [:body
-    "Hello,  "
-    nom]))
-
-;async app
-(defn- async-app [request-channel request]
-  (receive
-    request-channel
-    (fn [client-specified-name]
-      (let [the-name (client-name request client-specified-name)
-            decoded-requests (map*
-                               #(message/from-incoming-json
-                                  %
-                                  the-name)
-                               request-channel)]
-       (siphon
-          (transform-to-events
-            decoded-requests
-            the-name)
-          incoming-events)
-        (siphon
-          (map* str (events-for-client the-name))
-          request-channel)))))
-
-(def wrapped-async-app
-  (wrap-reload (wrap-params (wrap-aleph-handler async-app))))
-
-(defn- client-name [request given-name]
-  (let [ip (:remote-addr request)
-        ip (hash ip)]
-    (str ip "::::" given-name)))
-
-;routes
-(defroutes my-routes
-  (GET ["/subscribe/:key"] {}  wrapped-async-app)
-  (route/not-found wrapped-sync-app))
+(declare app)
 
 (defn- app [channel request]
   (if (:websocket request)
     (async-app channel request)
-    ((wrap-ring-handler (wrap-resource my-routes "public")) channel request)))
-
+    (sync-app channel request)))
 
 (defn -main [& args]
   (start-http-server app {:port 8080 :websocket true}))
