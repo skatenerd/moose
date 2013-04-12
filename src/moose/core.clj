@@ -4,7 +4,6 @@
     (hiccup core page)
     lamina.core
     moose.collections
-    (ring.middleware resource file-info params reload)
     aleph.http)
   (:require
     [aleph.formats :as formats]

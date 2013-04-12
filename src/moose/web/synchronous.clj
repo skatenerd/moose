@@ -2,7 +2,7 @@
   (:use
     compojure.core
     (hiccup core page)
-    (ring.middleware resource file-info params reload)
+    (ring.middleware resource file-info params)
     lamina.core
     aleph.http)
   (:require
@@ -17,7 +17,7 @@
        :body (page (get  (:query-params request) "name"))}))
 
 (def wrapped-sync-page-generator
-  (wrap-reload (wrap-params (wrap-aleph-handler sync-page-generator)) '(moose.core)))
+  (wrap-params (wrap-aleph-handler sync-page-generator)))
 
 (defroutes sync-app-routes
   (route/not-found wrapped-sync-page-generator))

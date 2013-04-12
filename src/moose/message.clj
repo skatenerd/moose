@@ -3,7 +3,6 @@
     compojure.core
     (hiccup core page)
     lamina.core
-    (ring.middleware resource file-info params reload)
     aleph.http)
   (:require
     [aleph.formats :as formats]

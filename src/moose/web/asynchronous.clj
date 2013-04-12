@@ -2,7 +2,7 @@
   (:use
     moose.core
     compojure.core
-    (ring.middleware resource file-info params reload)
+    (ring.middleware resource file-info params)
     lamina.core
     aleph.http)
   (:require
@@ -12,7 +12,6 @@
 
 (declare client-name async-app)
 
-;async app
 (defn async-app [request-channel request]
   (receive
     request-channel

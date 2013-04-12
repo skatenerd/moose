@@ -5,8 +5,7 @@
     moose.web.asynchronous
     compojure.core
     (hiccup core page)
-    (ring.middleware resource file-info params reload)
-    lamina.core
+    (ring.middleware resource file-info params)
     aleph.http)
   (:require
     [clojure.string :as string]
