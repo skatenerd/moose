@@ -50,3 +50,7 @@
 
 (defn decode-json [message]
   (formats/decode-json message))
+
+
+(defn encode-json [message]
+  (formats/encode-json->string message))

@@ -28,7 +28,7 @@
             the-name)
           incoming-events)
         (siphon
-          (map* str (events-for-client the-name))
+          (map* message/encode-json (events-for-client the-name))
           request-channel)))))
 
 (defn- client-name [request given-name]
