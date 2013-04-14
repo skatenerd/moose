@@ -8,7 +8,18 @@
     "it adds a requestor"
     (let [state (ref {"abc" ["judy", "stephen"]})]
       (add-requestor "abc" "chris henderson" state)
-      (is (= ["judy", "stephen", "chris henderson"] (get @state "abc"))))))
+      (is (= ["judy", "stephen", "chris henderson"] (get @state "abc")))))
+  (testing
+    "it does not add requestor who is already there"
+    (let [state (ref {"abc" ["judy", "stephen"]})]
+      (add-requestor "abc" "judy" state)
+      (add-requestor "abc" "stephen" state)
+      (is (= ["judy", "stephen"] (get @state "abc")))))
+  (testing
+    "it returns the number of people (including owner) who have to relinquish before you"
+    (let [state (ref {"abc" ["judy", "stephen"]})
+          response (add-requestor "abc" "music snob" state)]
+      (is (= {:holder "judy"} response)))))
 
 (deftest
   remove-requestor-test

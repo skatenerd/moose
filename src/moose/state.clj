@@ -3,7 +3,7 @@
 
 (def token-waiters (ref {}))
 
-(declare already-waiting? new-waiters add-waiter-for-token new-holder)
+(declare already-waiting? new-waiters add-waiter-for-token new-holder token-add-report)
 
 (defn add-requestor
   ([token requestor token-waiters]
@@ -11,7 +11,7 @@
     (alter
       token-waiters
       #(add-waiter-for-token % requestor token))
-    (first (get @token-waiters token))))
+    (token-add-report token requestor token-waiters)))
   ([token requestor]
    (add-requestor token requestor token-waiters)))
 
@@ -25,10 +25,13 @@
   ([token requestor]
    (remove-requestor token requestor token-waiters)))
 
+(defn- token-add-report [token requestor token-waiters]
+  {:holder (first (get @token-waiters token))})
+
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])
         new-waiters (new-waiters waiters-for-token requestor)]
-    (assoc current-state token new-waiters)))
+      (assoc current-state token new-waiters)))
 
 (defn- new-waiters [waiters-for-token requestor]
   (let []

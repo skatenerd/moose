@@ -56,7 +56,7 @@
       (message/build-message-to new-holder :grant token))))
 
 (defn- handle-request-event [requestor token]
-  (let [holder (state/add-requestor token requestor)
+  (let [holder (:holder (state/add-requestor token requestor))
         got-the-token? (= holder requestor)]
     (if got-the-token?
       (message/build-message-to requestor :grant token)
