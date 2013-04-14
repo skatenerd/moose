@@ -26,7 +26,8 @@
    (remove-requestor token requestor token-waiters)))
 
 (defn- token-add-report [token requestor token-waiters]
-  {:holder (first (get @token-waiters token))})
+  {:holder (first (get @token-waiters token))
+   :queue-length (dec (count (get @token-waiters token)))})
 
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])

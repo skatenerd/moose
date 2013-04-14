@@ -17,10 +17,18 @@
        :event (:action decoded)
        :token (:token decoded)})))
 
-(defn build-message-to [user action token]
-  {:recipient user
-   :event action
-   :token token})
+(defn build-message-to
+ ([user action token options]
+  (merge
+    {:recipient user
+     :event action
+     :token token}
+    options))
+  ([user action token]
+   (build-message-to user action token {})))
+
+(defn token-requested-message [user token queue-length]
+  (build-message-to user :requested token {:queue-length queue-length}))
 
 (defn build-message-from [user action token]
   {:sender user

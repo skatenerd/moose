@@ -41,6 +41,17 @@
               :token "h4873295"})))))
 
 (deftest
+  build-requested-message-test
+  (testing
+    "tells holder that token is requested"
+    (let [built-message (token-requested-message "judy" "h4873295" 82)]
+      (is (= built-message
+             {:recipient "judy"
+              :event :requested
+              :queue-length 82
+              :token "h4873295"})))))
+
+(deftest
   build-message-from-test
   (testing
     "builds from a sender"

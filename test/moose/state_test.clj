@@ -15,11 +15,20 @@
       (add-requestor "abc" "judy" state)
       (add-requestor "abc" "stephen" state)
       (is (= ["judy", "stephen"] (get @state "abc")))))
+
   (testing
     "it returns the number of people (including owner) who have to relinquish before you"
     (let [state (ref {"abc" ["judy", "stephen"]})
           response (add-requestor "abc" "music snob" state)]
-      (is (= {:holder "judy"} response)))))
+      (is (= "judy" (:holder response)))))
+
+  (testing
+      "it returns the number of people (including owner) who have to relinquish before you"
+      (let [state (ref {"abc" ["judy", "stephen"]})
+            response (add-requestor "abc" "music snob" state)]
+        (is (= 2 (:queue-length response)))))
+
+  )
 
 (deftest
   remove-requestor-test
