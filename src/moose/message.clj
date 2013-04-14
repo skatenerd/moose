@@ -30,6 +30,9 @@
 (defn token-requested-message [user token queue-length]
   (build-message-to user :requested token {:queue-length queue-length}))
 
+(defn people-in-line-message [user token queue-length]
+  (build-message-to user :queue-length token {:queue-length queue-length}))
+
 (defn build-message-from [user action token]
   {:sender user
    :event action

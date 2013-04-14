@@ -13,6 +13,8 @@ Walter requests access to token "abc".  Walter is granted ownership of token "ab
 
 ## TODO:
 
+Determine whether messages are actually piling up ("accumulating"?) in any channels
+
 Clean up after a user closes websocket connection.  Figure out what to do in the case of a browser refresh.
 
 When you request a token, the app should tell you how many people are also waiting for it.
