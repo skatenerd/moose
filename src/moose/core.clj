@@ -13,10 +13,13 @@
 
 (declare new-holder transform-request-to-event transform-to-outgoing-events handle-request-event handle-relinquish-event register-channel-for-token)
 
-(def incoming-events (named-channel "incoming"))
-(def outgoing-events (named-channel "outgoing-events"))
-(def grants (named-channel "grants"))
-(def requests (named-channel "requests"))
+(defn ignore [_]
+  nil)
+
+(def incoming-events (named-channel "incoming" ignore))
+(def outgoing-events (named-channel "outgoing-events" ignore))
+(def grants (named-channel "grants" ignore))
+(def requests (named-channel "requests" ignore))
 
 (defn transform-to-events [incoming-request-channel client-name]
   (map*
