@@ -57,9 +57,7 @@
 
 (defn- countown-messages [token queue-length]
   (let [waiters (state/waiters-for token)]
-    (map #(message/people-in-line-message % token queue-length) waiters)
-    )
-  )
+    (map #(message/people-in-line-message % token queue-length) waiters)))
 
 (defn- handle-request-event [requestor token]
   (let [add-results (state/add-requestor token requestor)
@@ -70,5 +68,4 @@
                (message/build-message-to requestor :grant token)
                (message/token-requested-message holder token queue-length))
         countown-messages (countown-messages token queue-length)]
-    (conj countown-messages poorly-named)
-    ))
+    (conj countown-messages poorly-named)))

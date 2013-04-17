@@ -5,6 +5,12 @@
 
 (declare already-waiting? new-waiters add-waiter-for-token new-holder token-add-report)
 
+(defn reset-state! []
+  (dosync
+   (alter
+    token-queues
+    (fn [_] {}))))
+
 (defn add-requestor
   ([token requestor token-queues]
   (dosync

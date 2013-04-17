@@ -5,11 +5,14 @@
         moose.message
         moose.web.asynchronous)
   (:require
+    [moose.state :as state]
     [aleph.formats :as formats]))
 
 (defmacro with-next-item [channel binding-name & body]
   `(let [~binding-name (wait-for-result (read-channel ~channel) 100)]
      ~@body))
+
+(use-fixtures :each  (fn  [f] (state/reset-state!) (f)))
 
 (deftest
   pushes-notifications-to-clients
@@ -39,11 +42,9 @@
                       (is (= karl-message (requested-message "0::::karl" 1))))
       (with-next-item bill-channel no-op)
       (with-next-item bill-channel bill-message
-                      (is (= bill-message (grant-message "0::::bill"))))))
-
-
-
-
+                      (is (= bill-message (grant-message "0::::bill")))))))
+(deftest
+  shortening-line
   (testing
     "three clients request tokens, waiters learn when line shortens"
     (let [[karl-channel karl-handle] (channel-pair)
@@ -54,7 +55,7 @@
           relinquish-message (formats/encode-json->string
                                {:action "relinquish" :token "abc"})
           people-in-line #(formats/encode-json->string
-                               (people-in-line-message %1 "abc" %2))]
+                            (people-in-line-message %1 "abc" %2))]
       (async-app karl-handle {})
       (async-app bill-handle {})
       (async-app friedrich-handle {})
@@ -66,26 +67,38 @@
       (enqueue friedrich-channel request-message)
       (enqueue karl-channel relinquish-message)
       (with-next-item friedrich-channel friedrich-message
-        (is (= friedrich-message (people-in-line "0::::friedrich" 2))))
+                      (is (= friedrich-message (people-in-line "0::::friedrich" 2))))
 
 
       ))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   )
+
+
+(deftest
+  cleanup
+
+  (testing
+    "owner of token relinquishes it by disconnecting"
+    (let [[karl-channel karl-handle] (channel-pair)
+          [bill-channel bill-handle] (channel-pair)
+          request-message (formats/encode-json->string
+                            {:action "request" :token "abc"})
+          relinquish-message (formats/encode-json->string
+                               {:action "relinquish" :token "abc"})
+          grant-message #(formats/encode-json->string
+                           (build-message-to % "grant" "abc"))
+          ]
+      (async-app karl-handle {})
+      (async-app bill-handle {})
+      (enqueue karl-channel "karl")
+      (enqueue bill-channel "bill")
+      (enqueue karl-channel request-message)
+      (enqueue bill-channel request-message)
+      (close karl-channel)
+      (with-next-item bill-channel noop)
+      (with-next-item bill-channel bill-message
+        (is (= bill-message (grant-message "0::::bill"))))
+)))
+

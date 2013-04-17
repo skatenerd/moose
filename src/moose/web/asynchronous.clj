@@ -29,7 +29,11 @@
           incoming-events)
         (siphon
           (map* message/encode-json (events-for-client the-name))
-          request-channel)))))
+          request-channel)
+        (on-closed request-channel #(prn "WAT"))
+
+
+        ))))
 
 (defn- client-name [request given-name]
   (let [ip (:remote-addr request)
