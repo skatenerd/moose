@@ -42,7 +42,7 @@
       (siphon (transform-to-outgoing-events channel) outgoing-events))))
 
 (defn- transform-to-outgoing-events [token-channel]
-  (map* (fn [message]
+  (mapcat* (fn [message]
           (let [sender (message/sender message)
                 token (message/token message)]
            (case (:event message)
@@ -53,13 +53,22 @@
 (defn- handle-relinquish-event [relinquisher token]
   (let [new-holder (state/remove-requestor token relinquisher)]
     (if new-holder
-      (message/build-message-to new-holder :grant token))))
+      [(message/build-message-to new-holder :grant token)] )))
+
+(defn- countown-messages [token queue-length]
+  (let [waiters (state/waiters-for token)]
+    (map #(message/people-in-line-message % token queue-length) waiters)
+    )
+  )
 
 (defn- handle-request-event [requestor token]
   (let [add-results (state/add-requestor token requestor)
         holder (:holder add-results)
         queue-length (:queue-length add-results)
-        got-the-token? (= holder requestor)]
-    (if got-the-token?
-      (message/build-message-to requestor :grant token)
-      (message/token-requested-message holder token queue-length))))
+        got-the-token? (= holder requestor)
+        poorly-named  (if got-the-token?
+               (message/build-message-to requestor :grant token)
+               (message/token-requested-message holder token queue-length))
+        countown-messages (countown-messages token queue-length)]
+    (conj countown-messages poorly-named)
+    ))

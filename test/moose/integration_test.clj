@@ -37,6 +37,7 @@
                       (is (= karl-message (grant-message "0::::karl"))))
       (with-next-item karl-channel karl-message
                       (is (= karl-message (requested-message "0::::karl" 1))))
+      (with-next-item bill-channel no-op)
       (with-next-item bill-channel bill-message
                       (is (= bill-message (grant-message "0::::bill"))))))
 
@@ -44,7 +45,7 @@
 
 
   (testing
-    "three clients request tokens"
+    "three clients request tokens, waiters learn when line shortens"
     (let [[karl-channel karl-handle] (channel-pair)
           [bill-channel bill-handle] (channel-pair)
           [friedrich-channel friedrich-handle] (channel-pair)
@@ -65,11 +66,7 @@
       (enqueue friedrich-channel request-message)
       (enqueue karl-channel relinquish-message)
       (with-next-item friedrich-channel friedrich-message
-                      (is (= friedrich-message (people-in-line "0::::friedrich" 2))))
-      (with-next-item friedrich-channel friedrich-message
-                      (is (= friedrich-message (people-in-line "0::::friedrich" 1))))
-
-
+        (is (= friedrich-message (people-in-line "0::::friedrich" 2))))
 
 
       ))

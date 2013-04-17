@@ -15,6 +15,9 @@
   ([token requestor]
    (add-requestor token requestor token-waiters)))
 
+(defn waiters-for [token]
+  (rest (get @token-waiters token)))
+
 (defn remove-requestor
   ([token requestor token-waiters]
    (dosync
