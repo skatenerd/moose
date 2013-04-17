@@ -1,36 +1,36 @@
 (ns moose.state
  (:use moose.collections))
 
-(def token-waiters (ref {}))
+(def token-queues (ref {}))
 
 (declare already-waiting? new-waiters add-waiter-for-token new-holder token-add-report)
 
 (defn add-requestor
-  ([token requestor token-waiters]
+  ([token requestor token-queues]
   (dosync
     (alter
-      token-waiters
+      token-queues
       #(add-waiter-for-token % requestor token))
-    (token-add-report token requestor token-waiters)))
+    (token-add-report token requestor token-queues)))
   ([token requestor]
-   (add-requestor token requestor token-waiters)))
+   (add-requestor token requestor token-queues)))
 
 (defn waiters-for [token]
-  (rest (get @token-waiters token)))
+  (rest (get @token-queues token)))
 
 (defn remove-requestor
-  ([token requestor token-waiters]
+  ([token requestor token-queues]
    (dosync
-     (let [waiters (get @token-waiters token)
+     (let [waiters (get @token-queues token)
            without-requestor (remove #(= requestor %) waiters)]
-       (alter token-waiters #(assoc % token without-requestor))
+       (alter token-queues #(assoc % token without-requestor))
        (new-holder waiters without-requestor))))
   ([token requestor]
-   (remove-requestor token requestor token-waiters)))
+   (remove-requestor token requestor token-queues)))
 
-(defn- token-add-report [token requestor token-waiters]
-  {:holder (first (get @token-waiters token))
-   :queue-length (dec (count (get @token-waiters token)))})
+(defn- token-add-report [token requestor token-queues]
+  {:holder (first (get @token-queues token))
+   :queue-length (dec (count (get @token-queues token)))})
 
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])
