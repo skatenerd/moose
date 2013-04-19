@@ -29,6 +29,12 @@
 (defn events-for-client [client-specified-name]
   (filter* (message/for-user? client-specified-name) outgoing-events))
 
+(defn handle-close [client-signature]
+  (let [generated-relinquish-events (map
+                                      #(message/token-relinquished-event client-signature %)
+                                      (state/tokens-held-by client-signature))]
+  (apply enqueue incoming-events generated-relinquish-events)))
+
 (defn- transform-request-to-event [action humanoid-namezoid]
   (let [to-enqueue action]
     (register-channel-for-token (:token action))
@@ -50,22 +56,28 @@
               "relinquish" (handle-relinquish-event sender token))))
         token-channel))
 
-(defn- handle-relinquish-event [relinquisher token]
-  (let [new-holder (state/remove-requestor token relinquisher)]
-    (if new-holder
-      [(message/build-message-to new-holder :grant token)] )))
+(defn- countdown-messages [token]
+  (let [waiters (state/waiters-for token)
+        waiter-count (count waiters)]
 
-(defn- countown-messages [token queue-length]
-  (let [waiters (state/waiters-for token)]
-    (map #(message/people-in-line-message % token queue-length) waiters)))
+    (map #(message/people-in-line-message % token waiter-count) waiters)))
+
+(defn- handle-relinquish-event [relinquisher token]
+  (let [new-holder (state/remove-requestor token relinquisher)
+        new-holder-message (if new-holder
+                               (message/build-message-to new-holder :grant token))
+        countdown-messages (countdown-messages token)]
+
+    (cons new-holder-message countdown-messages)))
 
 (defn- handle-request-event [requestor token]
   (let [add-results (state/add-requestor token requestor)
         holder (:holder add-results)
         queue-length (:queue-length add-results)
         got-the-token? (= holder requestor)
-        poorly-named  (if got-the-token?
+        outgoing-message  (if got-the-token?
                (message/build-message-to requestor :grant token)
                (message/token-requested-message holder token queue-length))
-        countown-messages (countown-messages token queue-length)]
-    (conj countown-messages poorly-named)))
+        ]
+    [outgoing-message]))
+

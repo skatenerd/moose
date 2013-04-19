@@ -30,6 +30,9 @@
 (defn token-requested-message [user token queue-length]
   (build-message-to user :requested token {:queue-length queue-length}))
 
+(defn token-relinquished-event [user token]
+  {:event "relinquish" :token token :sender user})
+
 (defn people-in-line-message [user token queue-length]
   (build-message-to user :queue-length token {:queue-length queue-length}))
 

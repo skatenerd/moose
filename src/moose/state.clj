@@ -5,6 +5,9 @@
 
 (declare already-waiting? new-waiters add-waiter-for-token new-holder token-add-report)
 
+(defn tokens-held-by [client]
+  (map key (filter #(= client (first (val %)))  @token-queues)))
+
 (defn reset-state! []
   (dosync
    (alter

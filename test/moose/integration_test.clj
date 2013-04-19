@@ -40,7 +40,6 @@
                       (is (= karl-message (grant-message "0::::karl"))))
       (with-next-item karl-channel karl-message
                       (is (= karl-message (requested-message "0::::karl" 1))))
-      (with-next-item bill-channel no-op)
       (with-next-item bill-channel bill-message
                       (is (= bill-message (grant-message "0::::bill")))))))
 (deftest
@@ -67,18 +66,13 @@
       (enqueue friedrich-channel request-message)
       (enqueue karl-channel relinquish-message)
       (with-next-item friedrich-channel friedrich-message
-                      (is (= friedrich-message (people-in-line "0::::friedrich" 2))))
+                      (is (= friedrich-message (people-in-line "0::::friedrich" 1))))
 
 
-      ))
-
-
-  )
-
+      )))
 
 (deftest
   cleanup
-
   (testing
     "owner of token relinquishes it by disconnecting"
     (let [[karl-channel karl-handle] (channel-pair)
@@ -97,7 +91,6 @@
       (enqueue karl-channel request-message)
       (enqueue bill-channel request-message)
       (close karl-channel)
-      (with-next-item bill-channel noop)
       (with-next-item bill-channel bill-message
         (is (= bill-message (grant-message "0::::bill"))))
 )))

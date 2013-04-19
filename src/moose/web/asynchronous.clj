@@ -30,7 +30,7 @@
         (siphon
           (map* message/encode-json (events-for-client the-name))
           request-channel)
-        (on-closed request-channel #(prn "WAT"))
+        (on-closed request-channel #(handle-close the-name))
 
 
         ))))
