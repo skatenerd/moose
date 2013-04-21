@@ -1,3 +1,4 @@
 MooseFrontend::Application.routes.draw do
-  get "/", to: 'tokens#index'
+  get "/", to: 'dashboard#watch'
+  resources :tokens
 end
