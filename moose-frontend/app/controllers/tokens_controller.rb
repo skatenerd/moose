@@ -5,13 +5,6 @@ class TokensController < ApplicationController
   end
 
   def index
-    #################
-    #################
-    #################
-    session[:user_id] = 1
-    #################
-    #################
-    #################
     user = User.find_by_id(session[:user_id])
     render(json: user.tokens)
   end
