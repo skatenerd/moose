@@ -13,13 +13,13 @@ Walter requests access to token "abc".  Walter is granted ownership of token "ab
 
 ## TODO:
 
-Determine whether messages are actually piling up ("accumulating"?) in any channels
-
-Clean up after a user closes websocket connection.  Figure out what to do in the case of a browser refresh.
-
 When you request a token, the app should tell you how many people are also waiting for it.
 
 When you own a requested token, the app should tell you how many people want it.
+
+distinguish between "people ahead" and "people behind" for "queue-length" terminology
+give users a hash to prevent them from being impersonate-able.
+when you open a connection (with your ID) the app should tell you waht you still own/are in line for
 
 ## License
 
