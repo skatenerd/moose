@@ -35,7 +35,6 @@
       (enqueue karl-channel request-message)
       (enqueue bill-channel request-message)
       (enqueue karl-channel relinquish-message)
-
       (with-next-item karl-channel karl-message
                       (is (= karl-message (grant-message "0::::karl"))))
       (with-next-item karl-channel karl-message
