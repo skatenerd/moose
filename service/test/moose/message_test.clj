@@ -48,7 +48,7 @@
       (is (= built-message
              {:recipient "judy"
               :event :requested
-              :queue-length 82
+              :people-behind 82
               :token "h4873295"})))))
 
 (deftest

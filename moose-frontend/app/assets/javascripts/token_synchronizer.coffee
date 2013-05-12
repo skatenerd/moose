@@ -9,7 +9,7 @@ class window.TokenSynchronizer
     parsed = JSON.parse(message.data)
     switch parsed.event
       when "grant" then @handle_grant(parsed)
-      when "queue-length" then @update_queue_length(parsed)
+      when "queue-shortened" then @update_queue_length(parsed)
       when "requested" then @handle_requested(parsed)
       else alert(parsed.event)
 
@@ -19,12 +19,12 @@ class window.TokenSynchronizer
 
   handle_requested: (parsed_message) ->
     theToken = @collection.findWhere(name: parsed_message.token)
-    subscriberCount = parsed_message["queue-length"]
+    subscriberCount = parsed_message["people-behind"]
     theToken.set({subscribers: subscriberCount, held: true})
 
   update_queue_length: (parsed_message) ->
     theToken = @collection.findWhere(name: parsed_message.token)
-    subscriberCount = parsed_message["queue-length"]
+    subscriberCount = parsed_message["people-ahead"]
     theToken.set({subscribers: subscriberCount})
 
   connect: ->

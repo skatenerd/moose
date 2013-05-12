@@ -27,14 +27,14 @@
   ([user action token]
    (build-message-to user action token {})))
 
-(defn token-requested-message [user token queue-length]
-  (build-message-to user :requested token {:queue-length queue-length}))
+(defn token-requested-message [user token people-behind]
+  (build-message-to user :requested token {:people-behind people-behind}))
 
 (defn token-relinquished-event [user token]
   {:event "relinquish" :token token :sender user})
 
-(defn people-in-line-message [user token queue-length]
-  (build-message-to user :queue-length token {:queue-length queue-length}))
+(defn people-in-line-message [user token people-ahead]
+  (build-message-to user :queue-shortened token {:people-ahead people-ahead}))
 
 (defn build-message-from [user action token]
   {:sender user
