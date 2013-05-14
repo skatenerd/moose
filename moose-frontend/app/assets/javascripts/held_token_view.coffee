@@ -17,7 +17,6 @@ jQuery ->
     events: 'click .relinquish': 'relinquish'
 
     relinquish: ->
-      #set held to false as well?
-      @model.set({subscribed: false})
+      @model.set({subscribed: false, held: false})
       @options.connection.send(JSON.stringify({action:"relinquish", token: @model.get 'name'}))
 

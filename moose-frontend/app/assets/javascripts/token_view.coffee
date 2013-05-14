@@ -10,7 +10,7 @@ jQuery ->
       $(@el).html """
         <span>#{@model.get 'name'}!</span>
         <span class="delete">DELETE</span>
-        <span class="request">REQUEST</span>
+        <span id="request-#{@model.get 'name'}" class="request">REQUEST</span>
       """
       @
 
