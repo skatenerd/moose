@@ -31,7 +31,7 @@
   ([token requestor token-queues]
    (dosync
      (let [waiters (get @token-queues token)
-           without-requestor (remove #(= requestor %) waiters)]
+           without-requestor (vec (remove #(= requestor %) waiters))]
        (alter token-queues #(assoc % token without-requestor))
        (new-holder waiters without-requestor))))
   ([token requestor]

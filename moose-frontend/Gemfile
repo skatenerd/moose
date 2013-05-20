@@ -23,7 +23,6 @@ end
 
 group :test do
   gem 'foreman'
-  gem 'testengineer'
   gem 'selenium-webdriver', '>= 2.31.0'
   gem 'cucumber'
   gem 'cucumber-rails'

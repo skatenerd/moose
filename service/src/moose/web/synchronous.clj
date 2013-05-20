@@ -20,15 +20,16 @@
 
 (defn attempt-reset-state [password]
   (if (= password config/state-reset-password)
-    (state/reset-state!)
+    (do (state/reset-state!) "success")
+    "fail"
     ))
 
 (def wrapped-sync-page-generator
   (wrap-params (wrap-aleph-handler sync-page-generator)))
 
 (defroutes sync-app-routes
-  (GET "/reset-state/:password" [id]
-    (attempt-reset-state id))
+  (GET "/reset-state/:password" [password]
+    (attempt-reset-state password))
   (route/not-found wrapped-sync-page-generator))
 
 (def sync-app
