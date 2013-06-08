@@ -25,8 +25,7 @@
 
 (def requested-message-to
   #(formats/encode-json->string
-                               (token-requested-message %1 "abc" %2))
-  )
+                               (token-requested-message %1 "abc" %2)))
 
 (deftest
   pushes-notifications-to-clients
@@ -105,6 +104,4 @@
       (with-next-item karl-channel karl-message)
       (with-next-item karl-channel karl-message)
       (with-next-item karl-channel karl-message
-                      (is (empty? karl-message)))
-
-      )))
+                      (is (empty? karl-message))))))

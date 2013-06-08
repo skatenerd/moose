@@ -9,8 +9,8 @@ jQuery ->
     render: =>
       $(@el).html """
         <span>#{@model.get 'name'}!</span>
-        <span class="delete">DELETE</span>
-        <span id="request-#{@model.get 'name'}" class="request">REQUEST</span>
+        <button class="delete">DELETE</button>
+        <button id="request-#{@model.get 'name'}" class="request">REQUEST</button>
       """
       @
 

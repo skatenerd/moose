@@ -9,17 +9,15 @@
     [aleph.formats :as formats]
     [compojure.route :as route]
     [moose.state :as state]
+    [moose.channel :as channel]
     [moose.message :as message]))
 
 (declare new-holder transform-request-to-event transform-to-outgoing-events handle-request-event handle-relinquish-event register-channel-for-token)
 
-(defn ignore [_]
-  nil)
-
-(def incoming-events (named-channel "incoming" ignore))
-(def outgoing-events (named-channel "outgoing-events" ignore))
-(def grants (named-channel "grants" ignore))
-(def requests (named-channel "requests" ignore))
+(def incoming-events (channel/new-channel "incoming"))
+(def outgoing-events (channel/new-channel "outgoing-events"))
+(def grants (channel/new-channel "grants"))
+(def requests (channel/new-channel "requests"))
 
 (defn transform-to-events [incoming-request-channel client-name]
   (map*

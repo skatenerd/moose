@@ -4,4 +4,4 @@
   (some #(= % value) items))
 
 (defn conjv [coll item]
-  (into [] (conj coll item)))
+  (into [] (conj (vec coll) item)))

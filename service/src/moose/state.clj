@@ -1,63 +1,50 @@
 (ns moose.state
- (:use moose.collections))
+ (:require
+   [moose.in-memory-state :as in-memory]
+   [moose.redis-state :as redis]
+   [moose.config :as config]
+   ))
 
-(def token-queues (ref {}))
+(defmulti tokens-held-by (fn [_] @config/state-implementation))
 
-(declare already-waiting? new-waiters add-waiter-for-token new-holder token-add-report)
+(defmethod tokens-held-by :in-memory [client]
+  (in-memory/tokens-held-by client))
 
-(defn tokens-held-by [client]
-  (map key (filter #(= client (first (val %)))  @token-queues)))
+(defmethod tokens-held-by :redis [client]
+  (redis/tokens-held-by client))
 
-(defn reset-state! []
-  (dosync
-   (alter
-    token-queues
-    (fn [_] {}))))
+(defmulti reset-state! (fn [] @config/state-implementation))
 
-(defn add-requestor
-  ([token requestor token-queues]
-  (dosync
-    (alter
-      token-queues
-      #(add-waiter-for-token % requestor token))
-    (token-add-report token requestor token-queues)))
-  ([token requestor]
-   (add-requestor token requestor token-queues)))
+(defmethod reset-state! :in-memory []
+  (in-memory/reset-state!))
 
-(defn waiters-for [token]
-  (rest (get @token-queues token)))
+(defmethod reset-state! :redis []
+  (redis/reset-state!))
 
-(defn remove-requestor
-  ([token requestor token-queues]
-   (dosync
-     (let [waiters (get @token-queues token)
-           without-requestor (vec (remove #(= requestor %) waiters))]
-       (alter token-queues #(assoc % token without-requestor))
-       (new-holder waiters without-requestor))))
-  ([token requestor]
-   (remove-requestor token requestor token-queues)))
 
-(defn- token-add-report [token requestor token-queues]
-  {:holder (first (get @token-queues token))
-   :queue-length (dec (count (get @token-queues token)))})
+(defmulti add-requestor (fn [& _] @config/state-implementation))
 
-(defn- add-waiter-for-token [current-state requestor token]
-  (let [waiters-for-token (get current-state token [])
-        new-waiters (new-waiters waiters-for-token requestor)]
-      (assoc current-state token new-waiters)))
+(defmethod add-requestor :in-memory [token requestor]
+  (in-memory/add-requestor token requestor))
 
-(defn- new-waiters [waiters-for-token requestor]
-  (let []
-    (if (already-waiting? waiters-for-token requestor)
-      waiters-for-token
-      (conjv waiters-for-token requestor))))
+(defmethod add-requestor :redis [token requestor]
+  (redis/add-requestor token requestor))
 
-(defn- already-waiting? [waiters requestor]
-  (iterative-contains? requestor waiters))
+(defmulti remove-requestor (fn [& _] @config/state-implementation))
 
-(defn- new-holder [before after]
-  (let [first-before (first before)
-        first-after (first after)]
-    (if (= first-before first-after)
-      nil
-      first-after)))
+(defmethod remove-requestor :in-memory [token requestor]
+  (in-memory/remove-requestor token requestor))
+
+(defmethod remove-requestor :redis [token requestor]
+  (redis/remove-requestor token requestor))
+
+(defmulti waiters-for (fn [_] @config/state-implementation))
+
+(defmethod waiters-for :in-memory [token]
+  (in-memory/waiters-for token))
+
+(defmethod waiters-for :redis [token]
+  (redis/waiters-for token))
+
+(defn owner [token]
+  (in-memory/owner token))

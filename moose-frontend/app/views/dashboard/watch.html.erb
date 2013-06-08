@@ -3,21 +3,29 @@
 <div>
   Watch your tokens!
 </div>
-<div id="tokens">
-  <input type="text" id="new_token_name">
-  <button type="button" id="add_token_button">
-    ADD TOKEN
-  </button>
+
+
+
+<div id="tokens" style="border: solid 1px black">
+  <div id="adder" style="border: solid 1px black">
+    <span> GOT A NEW TOKEN TO ASK FOR? </span>
+    <br>
+    <input type="text" id="new_token_name">
+    <button type="button" id="add_token_button">
+      ADD TOKEN
+    </button>
+  </div>
+
   STUFF YOU HAVE HISTORICALLY BEEN INTERESTED IN:
-  <ul id="tokens_list" style="border: solid 1px black">
+  <ul id="tokens_list">
   </ul>
 </div>
-WAITING FOR THESE:
+TOKENS YOU ARE WAITING FOR:
 <div id="subscriptions">
   <ul id="subscriptions_list" style="border: solid 1px black">
   </ul>
 </div>
-HELD TOKENS:
+TOKENS YOU HOLD:
 <div id="held_tokens">
   <ul id="held_tokens_list" style="border: solid 1px black">
   </ul>

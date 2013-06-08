@@ -9,8 +9,7 @@ jQuery ->
       $(@el).html """
         <span>#{@model.get 'name'}!</span>
         <span class="subscribers">#{(@model.get 'subscribers') || 0}</span>
-        <span class="held">#{(@model.get 'held') || false}</span>
-        <span class="relinquish">RELINQUISH</span>
+        <button class="relinquish">RELINQUISH</button>
       """
       @
 
