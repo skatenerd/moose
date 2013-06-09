@@ -5,7 +5,7 @@
 (defn already-waiting? [waiters requestor]
   (iterative-contains? requestor waiters))
 
-(defn new-waiters [waiters-for-token requestor]
+(defn waiters-with-requestor [waiters-for-token requestor]
   (let []
     (if (already-waiting? waiters-for-token requestor)
       waiters-for-token

@@ -46,5 +46,10 @@
 (defmethod waiters-for :redis [token]
   (redis/waiters-for token))
 
-(defn owner [token]
+(defmulti owner (fn [_] @config/state-implementation))
+
+(defmethod owner :in-memory [token]
   (in-memory/owner token))
+
+(defmethod owner :redis [token]
+  (redis/owner token))

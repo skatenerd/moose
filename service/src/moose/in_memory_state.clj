@@ -42,7 +42,7 @@
 
 (defn- add-waiter-for-token [current-state requestor token]
   (let [waiters-for-token (get current-state token [])
-        new-waiters (new-waiters waiters-for-token requestor)]
+        new-waiters (waiters-with-requestor waiters-for-token requestor)]
       (assoc current-state token new-waiters)))
 
 
