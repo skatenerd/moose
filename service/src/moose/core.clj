@@ -28,12 +28,15 @@
   (filter* (message/for-user? client-specified-name) outgoing-events))
 
 (defn handle-close [client-signature]
-  (let [generated-relinquish-events (map
-                                      #(message/token-relinquished-event client-signature %)
-                                      (state/tokens-held-by client-signature))
-        any-relinquish-events (not (empty? generated-relinquish-events))]
-    (if any-relinquish-events
-     (apply enqueue incoming-events generated-relinquish-events))))
+;  (let [generated-relinquish-events (map
+;                                      #(message/token-relinquished-event client-signature %)
+;                                      (state/tokens-held-by client-signature))
+;        any-relinquish-events (not (empty? generated-relinquish-events))]
+;    (if any-relinquish-events
+;     (apply enqueue incoming-events generated-relinquish-events)))
+
+
+  )
 
 (defn- transform-request-to-event [action humanoid-namezoid]
   (let [to-enqueue action]

@@ -45,7 +45,6 @@
         new-waiters (waiters-with-requestor waiters-for-token requestor)]
       (assoc current-state token new-waiters)))
 
-
 (defn- new-holder [before after]
   (let [first-before (first before)
         first-after (first after)]

@@ -8,6 +8,7 @@
   (:require
     [clojure.string :as string]
     [moose.message :as message]
+    [moose.state :as state]
     [compojure.route :as route]))
 
 (declare client-name async-app)
@@ -30,6 +31,7 @@
         (siphon
           (map* message/encode-json (events-for-client the-name))
           request-channel)
+        (enqueue request-channel (state/tokens-and-subscriptions the-name))
         (on-closed request-channel #(handle-close the-name))
 
 

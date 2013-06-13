@@ -13,11 +13,14 @@ Given /^I am logged in as "(.*)"$/ do |username|
   click_button("Submit")
 end
 
-
 When /^I request token "(.*)"$/ do |token|
   find("#request-#{token}").click
 end
 
 Then /^I possess token "(.*)"$/ do |token|
-  page.text.should match(/#{token}.*RELINQUISH/)
+  find("#held_tokens").text.should match(token)
+end
+
+Then /^I am waiting for token "(.*)"$/ do |token|
+  find("#subscriptions").text.should match(token)
 end

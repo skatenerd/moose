@@ -1,8 +1,10 @@
 (ns moose.web.synchronous-test
   (:use clojure.test
-        moose.config
         moose.web.synchronous
-        moose.state))
+        moose.state)
+  (:require
+   [moose.config :as config])
+  )
 
 (use-fixtures :each  (fn  [f] (reset-state!) (f)))
 
@@ -16,5 +18,5 @@
   (testing
     "works when password is right"
     (add-requestor "abc" "frank")
-    (attempt-reset-state state-reset-password)
+    (attempt-reset-state config/state-reset-password)
     (is (nil? (owner "abc")))))
